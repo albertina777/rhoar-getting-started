@@ -1,4 +1,4 @@
-package org.acme.person;
+package org.acme.person.rest;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import org.acme.person.model.DataTable;
 import org.acme.person.model.EyeColor;
 import org.acme.person.model.Person;
+import org.acme.person.CuteNameGenerator;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.hibernate.reactive.panache.PanacheQuery;
 import io.quarkus.panache.common.Parameters;
@@ -30,9 +31,13 @@ public class PersonResource {
     public Uni<List<Person>> getAll() {
         return Person.listAll();
     }
-    // TODO: add basic queries
-    // TODO: add data-table query
-    // TODO: Add lifecycle hook
+    
+    @GET
+    @Path("/hello")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String hello() {
+        return "hello Quarkus Application";
+    }
 
     @GET
     @Path("/eyes/{color}")
@@ -76,25 +81,17 @@ public class PersonResource {
         }));
     }
 
-        void onStart(@Observes StartupEvent ev) {
-    
-        List<Uni<Person>> people = IntStream.range(0, 1000)
-            .mapToObj(i -> CuteNameGenerator.generate())
-            .map(name -> {
-                LocalDate birth = LocalDate.now().plusWeeks(Math.round(Math.floor(Math.random() * 20 * 52 * -1)));
-                EyeColor color = EyeColor.values()[(int)(Math.floor(Math.random() * EyeColor.values().length))];
-
-                return new Person(name, birth, color);
-            })
-            .map(person -> person.<Person>persist())
-            .collect(Collectors.toList());
-
-        Panache.withTransaction(() ->
-            Uni.combine()
-                .all()
-                .unis(people)
-                .combinedWith(l -> null)
-        ).await().indefinitely();
+    void onStart(@Observes StartupEvent ev) {
+        for (int i = 0; i < 1000; i++) {
+            String name = CuteNameGenerator.generate();
+            LocalDate birth = LocalDate.now().plusWeeks(Math.round(Math.floor(Math.random() * 40 * 52 * -1)));
+            EyeColor color = EyeColor.values()[(int)(Math.floor(Math.random() * EyeColor.values().length))];
+            Person p = new Person();
+            p.birth = birth;
+            p.eyes = color;
+            p.name = name;
+            Person.persist(p);
+        }
     }
 
      
